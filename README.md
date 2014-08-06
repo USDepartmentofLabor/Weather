@@ -5,4 +5,5 @@ This class is used to access NOAA data for the OSHA Heat Safety App (v.2 prototy
 
 ### Dependencies
 [Swift Federal SDK](https://github.com/USDepartmentofLabor/Swift-Federal-Data-SDK)
+
 [Conversions](https://github.com/USDepartmentofLabor/Conversions)
