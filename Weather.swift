@@ -33,7 +33,6 @@ class Weather : GovDataRequestProtocol {
         var probabilityOfPrecipitation = [Int]()
         var humidity = [Int]()
         var windDirection = [Int]()
-        var direction = [Int]()
         // temperature is an array of dictionaries (F, C)
         var temperature = [[String:Int]]()
         var windGust = [[String:Int]]()
