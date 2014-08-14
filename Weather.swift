@@ -89,7 +89,7 @@ class Weather : GovDataRequestProtocol {
         let format="yyyy-MM-dd HH:mm"
         
         //Sample dateTime format from NOAA:  2014-07-24T05:00:00-08:00
-        func timeZoneAdjust (year: Int, month: Int, day: Int, hour: Int, hourModifier: Int, operator:NSString) -> (newYear:Int, newMonth:Int, newDay:Int, newHour:Int){
+        func timeZoneAdjust (year: Int, month: Int, day: Int, hour: Int, hourModifier: Int, timeOperator:NSString) -> (newYear:Int, newMonth:Int, newDay:Int, newHour:Int){
             /*
                 This function evalutates the timezone offest provided by NOAA and makes the appropriate adjustment.
             
@@ -105,7 +105,7 @@ class Weather : GovDataRequestProtocol {
             var newMonth = month
             var newYear = year
             
-            switch operator {
+            switch timeOperator {
             case "+":
                 newHour = (tempHour + hourModifier > 24 ? (tempHour+hourModifier)-24 : newHour)
                 
@@ -150,12 +150,12 @@ class Weather : GovDataRequestProtocol {
         slimmedStr = slimmedStr.substringFromIndex(advance(slimmedStr.startIndex, 3))
         let hour = slimmedStr.substringToIndex(advance(slimmedStr.startIndex, 2)).toInt()
         slimmedStr = slimmedStr.substringFromIndex(advance(slimmedStr.startIndex, 8))
-        let operator = slimmedStr.substringToIndex(advance(slimmedStr.startIndex, 1))
+        let timeOperator = slimmedStr.substringToIndex(advance(slimmedStr.startIndex, 1))
         slimmedStr = slimmedStr.substringFromIndex(advance(slimmedStr.startIndex, 1))
         let hourModifier = slimmedStr.substringToIndex(advance(slimmedStr.startIndex, 2)).toInt()
         let minuteModifier = slimmedStr.substringFromIndex(advance(slimmedStr.startIndex, 3)).toInt()
 
-        let adjustedDateTime = timeZoneAdjust(Int(year!), Int(month!), Int(day!), Int(hour!), Int(hourModifier!), operator)
+        let adjustedDateTime = timeZoneAdjust(Int(year!), Int(month!), Int(day!), Int(hour!), Int(hourModifier!), timeOperator)
         
         var dateFmt = NSDateFormatter()
         dateFmt.timeZone = NSTimeZone.defaultTimeZone()
@@ -200,74 +200,74 @@ class Weather : GovDataRequestProtocol {
             if forecastIndex != previousDayIndex {
                 subRecordIndex = 0
                 previousDayIndex++
-                sevenDayForecast += dailyForecast()
+                sevenDayForecast.append(dailyForecast())
             } else {
                 subRecordIndex++
             }
 
-            sevenDayForecast[forecastIndex].forecastTime += thisDateTime
+            sevenDayForecast[forecastIndex].forecastTime.append(thisDateTime)
 
             // dewpoint
             let tempDewPointF = results["dwml"]["data"]["parameters"]["temperature"][0]["value"][recordIndex].element?.text?.toInt()
             let tempDewPointC = conversion.fahrenheitToCelsius(tempDewPointF!)
-            sevenDayForecast[forecastIndex].dewPoint += ["F": Int(tempDewPointF!), "C":Int(tempDewPointC)]
+            sevenDayForecast[forecastIndex].dewPoint.append(["F": Int(tempDewPointF!), "C":Int(tempDewPointC)])
             
             // heat index
-            if results["dwml"]["data"]["parameters"]["temperature"][1]["value"][recordIndex].element?.text? {
+            if results["dwml"]["data"]["parameters"]["temperature"][1]["value"][recordIndex].element?.text? != nil {
                 let tempHeatIndexF = results["dwml"]["data"]["parameters"]["temperature"][1]["value"][recordIndex].element?.text?.toInt()
                 let tempHeatIndexC = conversion.fahrenheitToCelsius(tempHeatIndexF!)
-                sevenDayForecast[forecastIndex].heatIndex += ["F": Int(tempHeatIndexF!), "C":Int(tempHeatIndexC)]
+                sevenDayForecast[forecastIndex].heatIndex.append(["F": Int(tempHeatIndexF!), "C":Int(tempHeatIndexC)])
             } else {
-                sevenDayForecast[forecastIndex].heatIndex += ["F": 0, "C":0]
+                sevenDayForecast[forecastIndex].heatIndex.append(["F": 0, "C":0])
             }
 
             // wind speed (sustained)
-            if results["dwml"]["data"]["parameters"]["wind-speed"][0]["value"][recordIndex].element?.text? {
+            if results["dwml"]["data"]["parameters"]["wind-speed"][0]["value"][recordIndex].element?.text?  != nil {
                 let tempWindSpeedMPH = results["dwml"]["data"]["parameters"]["wind-speed"][0]["value"][recordIndex].element?.text?.toInt()
                 windSpeedMPH = Int(tempWindSpeedMPH!)
                 let tempWindSpeedKPH = conversion.milesToKilometers(tempWindSpeedMPH!)
-                sevenDayForecast[forecastIndex].windSpeed += ["MPH": Int(tempWindSpeedMPH!), "KPH":Int(tempWindSpeedKPH)]
+                sevenDayForecast[forecastIndex].windSpeed.append(["MPH": Int(tempWindSpeedMPH!), "KPH":Int(tempWindSpeedKPH)])
             } else {
-                sevenDayForecast[forecastIndex].windSpeed += ["MPH": 0, "KPH":0]
+                sevenDayForecast[forecastIndex].windSpeed.append(["MPH": 0, "KPH":0])
             }
             
             // cloud amount (%)
             let tempCloudAmount = results["dwml"]["data"]["parameters"]["cloud-amount"]["value"][recordIndex].element?.text?.toInt()
-            sevenDayForecast[forecastIndex].cloudAmount += tempCloudAmount!
+            sevenDayForecast[forecastIndex].cloudAmount.append(tempCloudAmount!)
             
             // probability of precipitation (%)
             let tempPOP = results["dwml"]["data"]["parameters"]["probability-of-precipitation"]["value"][recordIndex].element?.text?.toInt()
-            sevenDayForecast[forecastIndex].probabilityOfPrecipitation += tempPOP!
+            sevenDayForecast[forecastIndex].probabilityOfPrecipitation.append(tempPOP!)
             
             // relative humidity (%)
             let tempHumidity = results["dwml"]["data"]["parameters"]["humidity"]["value"][recordIndex].element?.text?.toInt()
-            sevenDayForecast[forecastIndex].humidity += tempHumidity!
+            sevenDayForecast[forecastIndex].humidity.append(tempHumidity!)
 
             // wind direction (degrees)
             let tempDirection = results["dwml"]["data"]["parameters"]["direction"]["value"][recordIndex].element?.text?.toInt()
-            sevenDayForecast[forecastIndex].windDirection += tempDirection!
+            sevenDayForecast[forecastIndex].windDirection.append(tempDirection!)
             
             // temperature
             let tempTemperatureF = results["dwml"]["data"]["parameters"]["temperature"][2]["value"][recordIndex].element?.text?.toInt()
             let tempTemperatureC = conversion.fahrenheitToCelsius(tempTemperatureF!)
-            sevenDayForecast[forecastIndex].temperature += ["F": Int(tempTemperatureF!), "C":Int(tempTemperatureC)]
+            sevenDayForecast[forecastIndex].temperature.append(["F": Int(tempTemperatureF!), "C":Int(tempTemperatureC)])
 
             // wind speed (gust)
-            if results["dwml"]["data"]["parameters"]["wind-speed"][1]["value"][recordIndex].element?.text? {
+            if results["dwml"]["data"]["parameters"]["wind-speed"][1]["value"][recordIndex].element?.text? != nil {
                 let tempWindGustMPH = results["dwml"]["data"]["parameters"]["wind-speed"][1]["value"][recordIndex].element?.text?.toInt()
                 windSpeedGustMPH = tempWindGustMPH!
                 let tempWindGustKPH = conversion.milesToKilometers(tempWindGustMPH!)
-                sevenDayForecast[forecastIndex].windSpeed += ["MPH": Int(tempWindGustMPH!), "KPH":Int(tempWindGustKPH)]
+                sevenDayForecast[forecastIndex].windSpeed.append(["MPH": Int(tempWindGustMPH!), "KPH":Int(tempWindGustKPH)])
             } else {
-                sevenDayForecast[forecastIndex].windSpeed += ["MPH": 0, "KPH":0]
+                sevenDayForecast[forecastIndex].windSpeed.append(["MPH": 0, "KPH":0])
             }
             // quantitative precipitation (inches) (hourly)
             // had trouble casting the string values to Double.  Hope to get this resolved at some time.
             
             // Wind chill: T(wc) = 35.74 + 0.6215T - 35.75(V0.16) + 0.4275T(V0.16)
-            sevenDayForecast[forecastIndex].windChill += feelsLike.calculateWindChill(Double(tempTemperatureF!), windInMPH: Double(windSpeedMPH))
+            sevenDayForecast[forecastIndex].windChill.append(feelsLike.calculateWindChill(Double(tempTemperatureF!), windInMPH: Double(windSpeedMPH)))
             
-            sevenDayForecast[forecastIndex].windChillGust += feelsLike.calculateWindChill(Double(tempTemperatureF!), windInMPH: Double(windSpeedGustMPH))
+            sevenDayForecast[forecastIndex].windChillGust.append(feelsLike.calculateWindChill(Double(tempTemperatureF!), windInMPH: Double(windSpeedGustMPH)))
             
             
             // Determine the minimum wind chill for the day.  Since gusts are stronger than sustatined winds, only windSpeedGust is used
@@ -279,9 +279,9 @@ class Weather : GovDataRequestProtocol {
             for weatherConditionsIndex in 0...1 {
                 switch results["dwml"]["data"]["parameters"]["weather"]["weather-conditions"][recordIndex]["value"][weatherConditionsIndex] {
                 case .Element(let elem):
-                        let additive = (results["dwml"]["data"]["parameters"]["weather"]["weather-conditions"][recordIndex]["value"][weatherConditionsIndex].element?.attributes["additive"]? ? results["dwml"]["data"]["parameters"]["weather"]["weather-conditions"][recordIndex]["value"][weatherConditionsIndex].element?.attributes["additive"] : "-")
+                        let additive = (results["dwml"]["data"]["parameters"]["weather"]["weather-conditions"][recordIndex]["value"][weatherConditionsIndex].element?.attributes["additive"]? != nil ? results["dwml"]["data"]["parameters"]["weather"]["weather-conditions"][recordIndex]["value"][weatherConditionsIndex].element?.attributes["additive"] : "-")
                         let weatherType = results["dwml"]["data"]["parameters"]["weather"]["weather-conditions"][recordIndex]["value"][weatherConditionsIndex].element?.attributes["weather-type"]
-                        sevenDayForecast[forecastIndex].weatherConditions += ["additive": additive!, "weatherType": weatherType!]
+                        sevenDayForecast[forecastIndex].weatherConditions.append(["additive": additive!, "weatherType": weatherType!])
                 case .Error(let error):
                     //println("error!")
                     let errorText = "Error!"
@@ -315,7 +315,7 @@ class Weather : GovDataRequestProtocol {
     
 }
 
-operator infix ** {}
+infix operator  ** {}
 
 func ** (num: Double, power: Double) -> Double{
     return pow(num, power)
