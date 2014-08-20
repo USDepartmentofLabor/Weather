@@ -161,7 +161,7 @@ class Weather : GovDataRequestProtocol {
         dateFmt.timeZone = NSTimeZone.defaultTimeZone()
         dateFmt.dateFormat = format
         let readableDate = "\(adjustedDateTime.newYear)-\(adjustedDateTime.newMonth)-\(adjustedDateTime.newDay) \(adjustedDateTime.newHour):00"
-        return dateFmt.dateFromString(readableDate)
+        return dateFmt.dateFromString(readableDate)!
         
     }
     
